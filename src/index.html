@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;" />
+  <title>CodeMind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ══ TITLE BAR (custom, frameless) ══ -->
+<div class="titlebar" id="titlebar">
+  <div class="tb-left">
+    <div class="tb-icon">⬡</div>
+    <span class="tb-name">CodeMind</span>
+    <!-- Menu -->
+    <nav class="tb-menu">
+      <div class="menu-grp" id="mg-file">
+        <button class="menu-btn" onclick="toggleMenu('m-file')">File</button>
+        <div class="menu-drop" id="m-file">
+          <div class="mi" onclick="newFile()">New File <kbd>Ctrl+N</kbd></div>
+          <div class="mi" onclick="openFile()">Open File… <kbd>Ctrl+O</kbd></div>
+          <div class="ms"></div>
+          <div class="mi" onclick="saveFile()">Save <kbd>Ctrl+S</kbd></div>
+          <div class="mi" onclick="saveFileAs()">Save As… <kbd>Ctrl+Shift+S</kbd></div>
+        </div>
+      </div>
+      <div class="menu-grp" id="mg-models">
+        <button class="menu-btn" onclick="switchTab('models');closeMenus()">Models</button>
+      </div>
+      <div class="menu-grp" id="mg-agent">
+        <button class="menu-btn" onclick="toggleMenu('m-agent')">Agent</button>
+        <div class="menu-drop" id="m-agent">
+          <div class="mi" onclick="clearChat();closeMenus()">Clear Chat</div>
+          <div class="mi" onclick="exportChat();closeMenus()">Export Chat</div>
+          <div class="ms"></div>
+          <div class="mi" onclick="resetSession();closeMenus()">Reset Session</div>
+        </div>
+      </div>
+    </nav>
+  </div>
+  <div class="tb-center" id="tb-center">
+    <span id="active-filename">untitled.py</span>
+  </div>
+  <div class="tb-right">
+    <div class="model-pill" id="model-pill">
+      <div class="mpill-dot" id="mpill-dot"></div>
+      <span id="mpill-label">No model loaded</span>
+    </div>
+    <button class="wc-btn" onclick="api.minimize()" title="Minimise">─</button>
+    <button class="wc-btn" id="wc-max" onclick="api.maximize()" title="Maximise">□</button>
+    <button class="wc-btn close" onclick="api.close()" title="Close">✕</button>
+  </div>
+</div>
+
+<!-- ══ ACTIVITY BAR ══ -->
+<div class="actbar">
+  <button class="act" id="act-editor"  onclick="switchTab('editor')"  title="Editor"  data-tab="editor">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+  </button>
+  <button class="act" id="act-models"  onclick="switchTab('models')"  title="Models"  data-tab="models">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+  </button>
+  <button class="act" id="act-download" onclick="switchTab('download')" title="Download Models" data-tab="download">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  </button>
+  <div class="act-spacer"></div>
+  <button class="act" id="act-settings" onclick="switchTab('settings')" title="Settings" data-tab="settings">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+</div>
+
+<!-- ══ CONTENT AREA ══ -->
+<div class="content">
+
+  <!-- ── TAB: EDITOR + CHAT ── -->
+  <div class="tab-view active" id="tab-editor">
+    <!-- Left: Code Editor -->
+    <div class="editor-col" id="editor-col">
+      <div class="col-header">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        CODE EDITOR
+        <span class="col-lang" id="col-lang">Python</span>
+        <div style="flex:1"></div>
+        <button class="hdr-btn" onclick="formatCode()">Format</button>
+        <button class="hdr-btn" onclick="clearEditor()">Clear</button>
+      </div>
+      <div class="tabs-bar" id="tabs-bar"></div>
+      <div class="editor-body">
+        <div class="gutter" id="gutter">1</div>
+        <textarea id="editor" class="editor-ta" spellcheck="false" autocomplete="off"
+          placeholder="// Write code here — or use the AI chat on the right →"
+          oninput="onEdit()" onscroll="syncGutter()"
+          onkeydown="editorKey(event)" onclick="updateCursor()" onkeyup="updateCursor()"></textarea>
+      </div>
+      <div class="col-footer">
+        <span id="cursor-pos">Ln 1, Col 1</span>
+        <span id="lang-info">Python</span>
+        <span id="enc-info">UTF-8</span>
+        <span id="unsaved" style="display:none;color:var(--yellow)">● Unsaved</span>
+        <div style="flex:1"></div>
+        <span class="model-status-bar" id="model-status-bar">⚪ No model</span>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="split-div" id="split-div"></div>
+
+    <!-- Right: AI Chat -->
+    <div class="chat-col" id="chat-col">
+      <div class="col-header">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        AI AGENT
+        <span class="col-lang" id="chat-model-tag">No model</span>
+        <div style="flex:1"></div>
+        <button class="hdr-btn" onclick="clearChat()">Clear</button>
+        <button class="hdr-btn" onclick="exportChat()">Export</button>
+      </div>
+      <div class="messages" id="messages">
+        <div class="welcome">
+          <div class="w-icon">🤖</div>
+          <h2>CodeMind AI Agent</h2>
+          <p>Runs 100% locally. No internet needed for chat.<br>Load a model from the <strong>Models</strong> tab to start.</p>
+          <div class="quick-grid">
+            <button class="qc" onclick="q('Write a Python REST API with FastAPI')">🚀 REST API</button>
+            <button class="qc" onclick="q('Explain my code:\n\n'+getCode())">📋 Explain code</button>
+            <button class="qc" onclick="q('Debug and fix:\n\n'+getCode())">🐛 Debug</button>
+            <button class="qc" onclick="q('Refactor for best practices:\n\n'+getCode())">✨ Refactor</button>
+            <button class="qc" onclick="q('Write unit tests for:\n\n'+getCode())">🧪 Tests</button>
+            <button class="qc" onclick="q('Add docstrings to:\n\n'+getCode())">📝 Document</button>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input">
+        <div class="ci-actions">
+          <button class="chip" onclick="insertCode()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Send code
+          </button>
+          <button class="chip" onclick="insertSel()">✂ Selection</button>
+          <span class="tok-count" id="tok-count">0 tokens</span>
+        </div>
+        <div class="ci-row">
+          <textarea id="ci" class="ci-ta" rows="3"
+            placeholder="Ask me anything about code… (Ctrl+Enter to send)"
+            onkeydown="ciKey(event)" oninput="updateTok()"></textarea>
+          <button class="ci-send" id="ci-send" onclick="sendMsg()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: INSTALLED MODELS ── -->
+  <div class="tab-view" id="tab-models">
+    <div class="panel-page">
+      <div class="pp-header">
+        <div>
+          <h1>Local Models</h1>
+          <p>GGUF models stored in your models folder. Click a model to load it.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-sec" onclick="api.openModelsDir()">📁 Open Folder</button>
+          <button class="btn-pri" onclick="switchTab('download')">+ Download Models</button>
+        </div>
+      </div>
+      <div id="models-path" class="models-path"></div>
+      <div id="models-grid" class="models-grid">
+        <div class="empty-state">
+          <div style="font-size:48px">📦</div>
+          <h3>No models yet</h3>
+          <p>Go to <strong>Download Models</strong> to get a coding LLM</p>
+          <button class="btn-pri" style="margin-top:12px" onclick="switchTab('download')">Download Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: DOWNLOAD MODELS ── -->
+  <div class="tab-view" id="tab-download">
+    <div class="panel-page">
+      <div class="pp-header">
+        <div>
+          <h1>Download Models</h1>
+          <p>Download GGUF models directly from HuggingFace — no Ollama, no internet proxy.</p>
+        </div>
+      </div>
+
+      <!-- Download progress -->
+      <div id="dl-progress-area" style="display:none" class="dl-progress-card">
+        <div class="dl-prog-top">
+          <span id="dl-filename">Downloading…</span>
+          <span id="dl-pct">0%</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+        <div class="dl-prog-sub">
+          <span id="dl-mb">0 MB</span>
+          <span id="dl-total"></span>
+          <button class="btn-danger" onclick="cancelDl()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Custom URL -->
+      <div class="dl-section">
+        <h2>Direct URL Download</h2>
+        <p class="hint">Paste any direct <code>.gguf</code> download URL (HuggingFace, etc.)</p>
+        <div class="url-row">
+          <input id="custom-url" class="url-input" type="text" placeholder="https://huggingface.co/…/model.gguf" />
+          <button class="btn-pri" onclick="downloadCustom()">Download</button>
+        </div>
+      </div>
+
+      <!-- Curated catalogue -->
+      <div class="dl-section">
+        <h2>Recommended Coding Models</h2>
+        <p class="hint">Curated selection — click any to download directly.</p>
+        <div class="catalogue" id="catalogue"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: SETTINGS ── -->
+  <div class="tab-view" id="tab-settings">
+    <div class="panel-page">
+      <div class="pp-header"><div><h1>Settings</h1><p>Customise CodeMind behaviour.</p></div></div>
+      <div class="settings-form">
+        <div class="sf-row">
+          <label>System Prompt</label>
+          <textarea id="sys-prompt" class="sf-ta" rows="5">You are an expert coding assistant. Write clean, efficient, well-documented code. Always use markdown code blocks with the correct language tag.</textarea>
+        </div>
+        <div class="sf-row">
+          <label>Temperature <span id="temp-val">0.7</span></label>
+          <input type="range" id="temp-range" min="0" max="2" step="0.05" value="0.7" oninput="document.getElementById('temp-val').textContent=this.value" class="sf-slider" />
+        </div>
+        <div class="sf-row">
+          <label>Models Folder</label>
+          <div class="sf-path-row">
+            <input type="text" id="models-dir-inp" class="sf-inp" readonly />
+            <button class="btn-sec" onclick="api.openModelsDir()">Open</button>
+          </div>
+        </div>
+        <button class="btn-pri" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .content -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

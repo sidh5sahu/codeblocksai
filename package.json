@@ -1,0 +1,16 @@
+{
+  "name": "codemind",
+  "version": "1.0.0",
+  "description": "VS Code-like AI coding agent with built-in local LLM runner",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "dependencies": {
+    "node-llama-cpp": "^3.1.1"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}
